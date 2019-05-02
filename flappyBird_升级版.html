@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>falppy bird</title>
+<style>
+	body
+	{
+		margin:0;
+		padding:0;
+		overflow:hidden;
+		background:url(back.jpg);
+	}
+	#bird
+	{
+		width:40px;
+		height:40px;
+		position:absolute;
+		left:calc(20% - 15px);
+		top:20%;
+		z-index:8;
+		background-image:url(bird2.png);
+		background-size:cover;
+		
+	}
+	.pillar
+	{
+		width:70px;
+		position:absolute;
+		background:#9CF;
+		left:100%
+	}
+	#sc
+	{
+		font-size:50px;
+		font-family:Georgia, "Times New Roman", Times, serif;
+		font-weight:600;
+		color:#FFF;
+		position:absolute;
+		left:50%;
+		transform:translateX(-50%);
+		top:30px;
+		z-index:10;
+	}
+	#gameover
+	{
+		background:url(stop.png);
+		width:400px;
+		height:300px;
+		background-size:cover;
+		position:absolute;
+		left:50%;
+		top:50%;
+		transform:translate(-50%,-50%);
+		z-index:10;
+		display:none;
+		
+	}
+	#gameover #div1
+	{
+		position:absolute;
+		right:10px;
+		top:40%;
+		font-size:30px;
+		font-family:Georgia, "Times New Roman", Times, serif;
+		font-weight:600;
+		color:#339;
+	}
+	#gameover #div2
+	{
+		position:absolute;
+		right:10px;
+		top:60%;
+		font-size:30px;
+		font-family:Georgia, "Times New Roman", Times, serif;
+		font-weight:600;
+	}
+	#gameover a
+	{
+		text-decoration:none;
+		color:#339;
+	}
+</style>
+</head>
+
+<body>
+	<div id="bird"></div>
+    <div id="sc">0</div>
+    <div id="gameover">
+    	<div id="div1">score:<span id="div3"></span></div>
+        <div id="div2"><a href="file:///D:/JavaCode/Demo/myFlappyBird/flappyBird_%E5%8D%87%E7%BA%A7%E7%89%88.html">Again?</a></div>
+    </div>
+    <audio id="au" src="music.wav" preload="auto"></audio>
+    <audio id="up" src="up.wav" preload="auto"></audio>
+    <audio id="over" src="over.wav" preload="auto"></audio>
+    <script>
+		//自动播放音乐------------------------------------
+		//toggleSound();
+		function toggleSound() { 
+            if (au.paused) { //判读是否播放  
+                au.paused=false;
+                au.play(); //没有就播放 
+            }    
+        }
+		
+		// 自由落体----------------------------------
+		var down=null;
+		var speed=0;
+		var rot=0;//角度
+		clearInterval(down);
+		down=setInterval(()=>{
+			speed=speed+1.5;
+			rot=rot+1;
+			var t=bird.offsetTop+speed;		
+			
+			if(t<0){
+				t=0;
+				clearInterval(moveLeft);
+				dead=true;
+				gameover.style.display='block';
+				sc.style.display='none';
+				div3.innerHTML=score;
+				au.paused=true;
+				over.play();
+			}
+			
+			if(t>innerHeight-bird.offsetHeight){
+				t=innerHeight-bird.offsetHeight;
+				clearInterval(moveLeft);
+				gameover.style.display='block';
+				sc.style.display='none';
+				div3.innerHTML=score;
+				au.paused=true;
+				over.play();
+				clearInterval(down);
+			}
+			bird.style.top=t+'px';
+			bird.style.transform='rotate('+rot+'deg)';
+			console.log(rot);
+			au.play();
+		},30);
+		
+		//点击向上运动---------------------------------
+		var dead=false;
+		document.onkeydown=document.onmousedown=()=>{
+			if(dead) return;
+			speed-=23;
+			rot=-12;
+			up.play();
+			
+			
+		}
+		
+		
+		//碰撞检测(A运动，B静止)------------------------
+		function bump(objA,objB){
+			var objAt=objA.offsetTop+objA.offsetHeight;
+			var objBt=objB.offsetTop;
+			var objAl=objA.offsetLeft+objA.offsetWidth;
+			var objBl=objB.offsetLeft;
+			var objAb=objA.offsetTop;
+			var objBb=objB.offsetTop+objB.offsetHeight;
+			var objAr=objA.offsetLeft;
+			var objBr=objB.offsetLeft+objB.offsetWidth;
+			if(objAt>objBt&&objAl>objBl&&objAb<objBb&&objAr<objBr){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		
+		//生成柱子------------------------------------
+		function createPil(){
+			var gap=180; //柱子间缝隙
+			var pilT=document.createElement('div');
+			pilT.className='pillar';
+			pilT.sp=100;
+			var h=randHeight(30,150);
+			pilT.style.height=h+'px';
+			pilT.style.top=0;
+			document.body.appendChild(pilT);
+			
+			var pilB=document.createElement('div');
+			pilB.className='pillar';
+			pilB.sp=100;
+			pilB.style.height=innerHeight-h-gap+'px';
+			pilB.style.top=h+gap+'px';
+			document.body.appendChild(pilB);
+		}
+		
+		
+		function randHeight(min,max){
+			return Math.random()*(max-min+1)+min;
+		}
+		
+		//柱子向左移动----------------------------------
+		var moveLeft=null;
+		var sp=100;
+		var score=0;
+		clearInterval(moveLeft);
+		moveLeft=setInterval(()=>{
+			var pils=document.querySelectorAll('.pillar');
+			for(var i=0;i<pils.length;i++){
+				pils[i].style.left=pils[i].sp+'%';
+				pils[i].sp-=1;
+				if(pils[i].offsetLeft<-70){
+					document.body.removeChild(pils[i]);
+				}
+				
+				//碰撞检测
+				if(bump(bird,pils[i])){
+					clearInterval(moveLeft);
+					dead=true;
+					gameover.style.display='block';
+					sc.style.display='none';
+					div3.innerHTML=score;
+					au.paused=true;
+					over.play();
+				}
+				
+				//计分
+				pils[i].dif=bird.offsetLeft-pils[i].sp*innerWidth/100-pils[i].offsetWidth;				
+				if((i%2==0)&&(pils[i].dif> 0)&&(pils[i].dif)<5){
+					score++;
+					sc.innerHTML=score;
+				}
+			}
+		},100);
+		
+		//多柱子生成、移动、消失----------------------------
+		var movePils=null;
+		movePils=setInterval(()=>{
+			createPil();
+		},3000)
+		
+	</script>
+</body>
+</html>
